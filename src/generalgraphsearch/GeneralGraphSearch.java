@@ -15,22 +15,36 @@ class Node{
   
     private int pathCost;
     private Node parent;
+    private int depth=0;
     int[][] stateInfo = new int[4][4];
-   
+    private String path="";
+            
     public Node(int[][]stateInfo,Node parent,int pathCost){
         this.stateInfo=stateInfo;
         this.parent=parent;
         this.pathCost=pathCost;
         
+        
+    }
+
+    public int getDepth() {
+        return depth;
     }
     public int getPathCost() {
         return pathCost;
     }
     public void setPathCost(int pathCost) {
+        this.depth+=parent.getDepth()+1;
         this.pathCost = pathCost;
     }
     public int[][] getStateInfo() {
         return stateInfo;
+    }
+    public void setPath(String NewPath){
+        this.path+=parent.getPath()+NewPath+" ";
+    }
+    public String getPath(){
+        return this.path;
     }
     
 }
@@ -43,20 +57,21 @@ public class GeneralGraphSearch {
    
    private static int x,y,i,j;
     
-   private static String graphSearch(Queue<Node> Frontier,int initialState[][] ){
-        Frontier.add(new Node(initialState,null,FirstHeuristic(initialState)));
+   private static String graphSearch(Queue<Node> Frontier,int initialState[][],String heuristic){
+        Frontier.add(new Node(initialState,null,heuristicSelection(initialState,heuristic)));
         exploredSet=new ArrayList<>(); //Explored Set
         int counter=1;
         while(true){
             if(Frontier.isEmpty())return "FAIL!";
-            System.out.println("Path Cost: "+Frontier.peek().getPathCost()+" -- Counter: "+counter++);
+            System.out.println("Path Cost: "+Frontier.peek().getPathCost()+" -- Counter: "+counter++ +"  Depth level: "+Frontier.peek().getDepth());
+            System.out.println("Path: "+Frontier.peek().getPath());
             printArray(Frontier.peek().getStateInfo());
             if(compare2dArrays(Frontier.peek().getStateInfo(),goalState)){
                 System.out.println("DONE!!!");
                 return "SOLUTION";
             }
             exploredSet.add(Frontier.peek());
-            findChildNodes(Frontier.poll(),Frontier,exploredSet);
+            findChildNodes(Frontier.poll(),Frontier,exploredSet,heuristic);
         }
         
     }
@@ -90,7 +105,7 @@ public class GeneralGraphSearch {
    }
    
     private static void findNumber(int number,int[][]stateOfNode){
-        outerloop: 
+       outerloop: 
        for(i=0;i<4;i++){
            for(j=0;j<4;j++){
                if(stateOfNode[i][j]==number)
@@ -128,8 +143,7 @@ public class GeneralGraphSearch {
         for(int x=0;x<4;x++){
             for(int y=0;y<4;y++){
                 if(arr1[x][y]==arr2[x][y]){
-                    equality++;
-                    
+                    equality++;  
             }
             }
         }
@@ -174,61 +188,83 @@ public class GeneralGraphSearch {
         
         return exp&&front;
     }
+    
+    private static int heuristicSelection(int[][]stateInfo,String heuristic){
+       switch (heuristic) {
+           case "h1":
+               return FirstHeuristic(stateInfo);
+           case "h2":
+               return SecondHeuristic(stateInfo);
+           default:
+               return 0;
+       }
+    } 
    
-    private static void findChildNodes(Node node,Queue<Node>Frontier,ArrayList <Node> exploredSet){
+    private static void findChildNodes(Node node,Queue<Node>Frontier,ArrayList <Node> exploredSet,String heuristic){
         findBlank(node.getStateInfo());
-        if(testArrayIndex(x-1,y)){
+        /*
+        fun(x-1,y,node
+        */
+        if(testArrayIndex(x-1,y)){//NORTH
             Node child=new Node(moveOperation(node.getStateInfo(),x,y,x-1,y),node,node.getPathCost()+1);
-            child.setPathCost(child.getPathCost()+FirstHeuristic(child.getStateInfo()));
+            child.setPathCost(child.getPathCost()+heuristicSelection(child.getStateInfo(),heuristic));
+            child.setPath("N");
             if(loopChecker(Frontier,child,exploredSet))
                 Frontier.add(child);
                     }
        
-        if(testArrayIndex(x+1,y)){
+        if(testArrayIndex(x+1,y)){//SOUTH
             Node child=new Node(moveOperation(node.getStateInfo(),x,y,x+1,y),node,node.getPathCost()+1);
-            child.setPathCost(child.getPathCost()+FirstHeuristic(child.getStateInfo()));
+            child.setPathCost(child.getPathCost()+heuristicSelection(child.getStateInfo(),heuristic));
+            child.setPath("S");
             if(loopChecker(Frontier,child,exploredSet))
                 Frontier.add(child);
                     }
        
-        if(testArrayIndex(x,y+1)){  
+        if(testArrayIndex(x,y+1)){//EAST
             Node child=new Node(moveOperation(node.getStateInfo(),x,y,x,y+1),node,node.getPathCost()+1);
-            child.setPathCost(child.getPathCost()+FirstHeuristic(child.getStateInfo()));
+            child.setPathCost(child.getPathCost()+heuristicSelection(child.getStateInfo(),heuristic));
+            child.setPath("E");
             if(loopChecker(Frontier,child,exploredSet))
                 Frontier.add(child);
                     }
         
-        if(testArrayIndex(x,y-1)){                        
+        if(testArrayIndex(x,y-1)){//WEST                  
             Node child=new Node(moveOperation(node.getStateInfo(),x,y,x,y-1),node,node.getPathCost()+1);
-            child.setPathCost(child.getPathCost()+FirstHeuristic(child.getStateInfo()));
+            child.setPathCost(child.getPathCost()+heuristicSelection(child.getStateInfo(),heuristic));
+            child.setPath("W");
             if(loopChecker(Frontier,child,exploredSet))
                 Frontier.add(child);
                     }
    
-        if(testArrayIndex(x-1,y-1)){                       
+        if(testArrayIndex(x-1,y-1)){//NORTH-WEST                     
             Node child=new Node(moveOperation(node.getStateInfo(),x,y,x-1,y-1),node,node.getPathCost()+3);
-            child.setPathCost(child.getPathCost()+FirstHeuristic(child.getStateInfo()));
+            child.setPathCost(child.getPathCost()+heuristicSelection(child.getStateInfo(),heuristic));
+            child.setPath("NW");
             if(loopChecker(Frontier,child,exploredSet))
                 Frontier.add(child);
                     }
        
-        if(testArrayIndex(x-1,y+1)){                      
+        if(testArrayIndex(x-1,y+1)){//NORTH-EAST                      
             Node child=new Node(moveOperation(node.getStateInfo(),x,y,x-1,y+1),node,node.getPathCost()+3);
-            child.setPathCost(child.getPathCost()+FirstHeuristic(child.getStateInfo()));
+            child.setPathCost(child.getPathCost()+heuristicSelection(child.getStateInfo(),heuristic));
+            child.setPath("NE");
             if(loopChecker(Frontier,child,exploredSet))
                 Frontier.add(child);
                     }
       
-        if(testArrayIndex(x+1,y-1)){                        
+        if(testArrayIndex(x+1,y-1)){//SOUTH-WEST                        
             Node child=new Node(moveOperation(node.getStateInfo(),x,y,x+1,y-1),node,node.getPathCost()+3);
-            child.setPathCost(child.getPathCost()+FirstHeuristic(child.getStateInfo()));
+            child.setPathCost(child.getPathCost()+heuristicSelection(child.getStateInfo(),heuristic));
+            child.setPath("SW");
             if(loopChecker(Frontier,child,exploredSet))
                 Frontier.add(child);
                     }
       
-        if(testArrayIndex(x+1,y+1)){                       
+        if(testArrayIndex(x+1,y+1)){//SOUTH-EAST                       
             Node child=new Node(moveOperation(node.getStateInfo(),x,y,x+1,y+1),node,node.getPathCost()+3);
-            child.setPathCost(child.getPathCost()+FirstHeuristic(child.getStateInfo()));
+            child.setPathCost(child.getPathCost()+heuristicSelection(child.getStateInfo(),heuristic));
+            child.setPath("SE");
             if(loopChecker(Frontier,child,exploredSet))
                 Frontier.add(child);
                     }
@@ -240,7 +276,8 @@ public class GeneralGraphSearch {
         Queue<Node> BFS_QUEUE = new LinkedList<>(); 
         Comparator<Node> UCS_pathCost = Comparator.comparing(Node::getPathCost);
         PriorityQueue<Node> UCSandHeuristic_Frontier = new PriorityQueue<>(UCS_pathCost);
-        int[][]initialState={   { 1, 3, 5, 4 },{ 2, 13, 14, 15 },{11, 12, 9, 6 },{ 0, 10, 8, 7 }   };
-        graphSearch(UCSandHeuristic_Frontier,initialState);
+        int[][]initialState={   { 1, 13, 3, 4 },{ 12, 11, 2, 5 },{9, 8, 15, 7 },{ 10, 6, 14, 0 }   };
+        
+        graphSearch(UCSandHeuristic_Frontier,initialState,"h2");
     } 
 }
